@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meus Agendamentos - PetShop</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>Meus Agendamentos</h1>
+        <nav>
+            <span id="userName"></span>
+            <button id="logoutBtn">Sair</button>
+        </nav>
+    </header>
+    <main>
+        <section>
+            <h2>Novo Agendamento</h2>
+            <form id="agendamentoForm">
+                <div class="form-group">
+                    <label for="nome_pet">Nome do Pet:</label>
+                    <input type="text" id="nome_pet" name="nome_pet" required>
+                </div>
+                <div class="form-group">
+                    <label for="raca">Raça:</label>
+                    <input type="text" id="raca" name="raca" required>
+                </div>
+                <div class="form-group">
+                    <label for="data_agendamento">Data e Hora:</label>
+                    <input type="datetime-local" id="data_agendamento" name="data_agendamento" required>
+                </div>
+                <div class="form-group">
+                    <label for="observacoes">Observações:</label>
+                    <textarea id="observacoes" name="observacoes"></textarea>
+                </div>
+                <button type="submit" class="btn">Agendar</button>
+            </form>
+        </section>
+        
+        <section>
+            <h2>Meus Agendamentos</h2>
+            <div id="agendamentosList"></div>
+        </section>
+    </main>
+    <script>
+        // Verifica se o usuário está logado
+        const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('user'));
+        
+        if (!token || !user) {
+            window.location.href = 'login.html';
+        }
+        
+        // Mostra o nome do usuário
+        document.getElementById('userName').textContent = `Olá, ${user.nome}`;
+        
+        // Logout
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = 'index.html';
+        });
+        
+        // Carrega os agendamentos ao carregar a página
+        document.addEventListener('DOMContentLoaded', carregarAgendamentos);
+        
+        // Formulário de novo agendamento
+        document.getElementById('agendamentoForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const agendamento = {
+                nome_pet: document.getElementById('nome_pet').value,
+                raca: document.getElementById('raca').value,
+                data_agendamento: document.getElementById('data_agendamento').value,
+                observacoes: document.getElementById('observacoes').value
+            };
+            
+            try {
+                const response = await fetch('http://localhost:3000/api/agendamentos', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(agendamento)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    alert('Agendamento criado com sucesso!');
+                    document.getElementById('agendamentoForm').reset();
+                    carregarAgendamentos();
+                } else {
+                    alert(data.error || 'Erro ao criar agendamento');
+                }
+            } catch (error) {
+                alert('Erro ao conectar com o servidor');
+                console.error(error);
+            }
+        });
+        
+        // Função para carregar os agendamentos
+        async function carregarAgendamentos() {
+            try {
+                const response = await fetch('http://localhost:3000/api/agendamentos', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const agendamentos = await response.json();
+                
+                const container = document.getElementById('agendamentosList');
+                container.innerHTML = '';
+                
+                if (agendamentos.length === 0) {
+                    container.innerHTML = '<p>Nenhum agendamento encontrado.</p>';
+                    return;
+                }
+                
+                agendamentos.forEach(agendamento => {
+                    const agendamentoDiv = document.createElement('div');
+                    agendamentoDiv.className = 'agendamento-item';
+                    
+                    const data = new Date(agendamento.data_agendamento);
+                    const dataFormatada = data.toLocaleString('pt-BR');
+                    
+                    agendamentoDiv.innerHTML = `
+                        <h3>${agendamento.nome_pet} (${agendamento.raca})</h3>
+                        <p><strong>Data:</strong> ${dataFormatada}</p>
+                        ${agendamento.observacoes ? `<p><strong>Observações:</strong> ${agendamento.observacoes}</p>` : ''}
+                        <div class="agendamento-actions">
+                            <button class="btn-edit" data-id="${agendamento.id}">Editar</button>
+                            <button class="btn-delete" data-id="${agendamento.id}">Excluir</button>
+                        </div>
+                    `;
+                    
+                    container.appendChild(agendamentoDiv);
+                });
+                
+                // Adiciona eventos aos botões de editar e excluir
+                document.querySelectorAll('.btn-edit').forEach(btn => {
+                    btn.addEventListener('click', () => editarAgendamento(btn.dataset.id));
+                });
+                
+                document.querySelectorAll('.btn-delete').forEach(btn => {
+                    btn.addEventListener('click', () => excluirAgendamento(btn.dataset.id));
+                });
+            } catch (error) {
+                console.error('Erro ao carregar agendamentos:', error);
+                alert('Erro ao carregar agendamentos');
+            }
+        }
+        
+        // Função para editar agendamento
+        async function editarAgendamento(id) {
+            try {
+                const response = await fetch(`http://localhost:3000/api/agendamentos/${id}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const agendamento = await response.json();
+                
+                if (response.ok) {
+                    // Preenche o formulário com os dados do agendamento
+                    document.getElementById('nome_pet').value = agendamento.nome_pet;
+                    document.getElementById('raca').value = agendamento.raca;
+                    
+                    // Ajusta a data para o formato do input datetime-local
+                    const date = new Date(agendamento.data_agendamento);
+                    const formattedDate = date.toISOString().slice(0, 16);
+                    document.getElementById('data_agendamento').value = formattedDate;
+                    
+                    document.getElementById('observacoes').value = agendamento.observacoes || '';
+                    
+                    // Rola a página até o formulário
+                    document.getElementById('agendamentoForm').scrollIntoView();
+                } else {
+                    alert('Erro ao carregar agendamento para edição');
+                }
+            } catch (error) {
+                console.error('Erro ao editar agendamento:', error);
+                alert('Erro ao editar agendamento');
+            }
+        }
+        
+        // Função para excluir agendamento
+        async function excluirAgendamento(id) {
+            if (!confirm('Tem certeza que deseja excluir este agendamento?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`http://localhost:3000/api/agendamentos/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    alert('Agendamento excluído com sucesso!');
+                    carregarAgendamentos();
+                } else {
+                    const data = await response.json();
+                    alert(data.error || 'Erro ao excluir agendamento');
+                }
+            } catch (error) {
+                console.error('Erro ao excluir agendamento:', error);
+                alert('Erro ao excluir agendamento');
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PetShop - Agendamento de Banhos</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>Bem-vindo ao PetShop</h1>
+        <nav>
+            <a href="login.html">Login</a>
+            <a href="cadastro.html">Cadastre-se</a>
+        </nav>
+    </header>
+    <main>
+        <section class="hero">
+            <div class="hero-content">
+                <h2>Agende o banho do seu pet com facilidade</h2>
+                <p>Oferecemos os melhores serviços para o seu animal de estimação</p>
+                <a href="login.html" class="btn">Agendar Agora</a>
+            </div>
+            <img src="imagens/cachorro.jpg" alt="Cachorro feliz após o banho" class="hero-image">
+        </section>
+
+        <section class="servicos">
+            <h2>Nossos Serviços</h2>
+            <div class="servico">
+                <img src="imagens/banho.jpg" alt="Serviço de banho">
+                <h3>Banho Completo</h3>
+                <p>Com produtos de alta qualidade</p>
+            </div>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2025 PetShop - Todos os direitos reservados</p>
+    </footer>
+    <script>
+        // Teste da API
+        fetch('http://localhost:3000/api/test')
+            .then(response => response.json())
+            .then(data => console.log('Resposta da API:', data))
+            .catch(error => console.error('Erro ao conectar com a API:', error));
+    </script>
+</body>
+</html>
