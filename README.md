@@ -42,7 +42,6 @@ petshop-system/backend
 
 
 ```
-1. Clone o repositório:
+1. LINK do repositório:
 ```bash
-git clone https://github.com/seu-usuario/petshop-system.git
-cd petshop-system
+https://github.com/thiffanymorais/petshop.git
